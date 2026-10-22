@@ -6,7 +6,7 @@ services:
     environment:
       POSTGRES_DB: cleanai
       POSTGRES_USER: cleanai
-      POSTGRES_PASSWORD: cleanai1234
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
