@@ -33,7 +33,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: postgresql://cleanai:cleanai1234@db:5432/cleanai
+      DATABASE_URL: postgresql://cleanai:${DB_PASSWORD}@db:5432/cleanai
       REDIS_URL: redis://redis:6379
       KAKAO_API_KEY: ${KAKAO_API_KEY}
     depends_on:
