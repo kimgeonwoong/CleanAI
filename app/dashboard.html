@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CleanAI FMS 관제 대시보드</title>
+
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', sans-serif; background: #0d1117; color: #e6edf3; display: flex; flex-direction: column; height: 100vh; }
+
+/* ── 헤더 ── */
+header {
+  background: #161b22;
+  border-bottom: 1px solid #30363d;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+header h1 { font-size: 18px; font-weight: 700; color: #58a6ff; }
+.badge { background: #238636; color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 10px; }
+.stat { font-size: 13px; color: #8b949e; margin-left: auto; }
+.stat span { color: #f0f6fc; font-weight: 600; }
+
+/* ── 메인 레이아웃 ── */
+.main { display: flex; flex: 1; overflow: hidden; }
+
+/* ── 사이드패널 ── */
+.sidebar {
+  width: 300px;
+  background: #161b22;
+  border-right: 1px solid #30363d;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.panel-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #8b949e;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  padding: 12px 16px 8px;
+  border-bottom: 1px solid #21262d;
+}
+
+/* ── 경로 버튼 ── */
+.route-controls { padding: 12px 16px; border-bottom: 1px solid #21262d; }
+.btn {
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 8px;
+  transition: opacity .15s;
+}
+.btn:hover { opacity: .85; }
+.btn-blue  { background: #1f6feb; color: #fff; }
+.btn-green { background: #238636; color: #fff; }
+.btn-red   { background: #b91c1c; color: #fff; }
+.route-info {
+  font-size: 12px;
+  color: #8b949e;
+  padding: 6px 0 0;
+  min-height: 32px;
+}
+.route-info .dist { color: #58a6ff; font-weight: 700; }
+.route-info .err  { color: #f85149; }
+
+/* ── 탐지 목록 ── */
+.det-list { flex: 1; overflow-y: auto; padding: 0; }
+.det-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid #21262d;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background .1s;
+}
+.det-item:hover { background: #1c2128; }
+.det-item.collected { opacity: .4; }
+.det-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.det-body { flex: 1; }
+.det-cat  { font-weight: 600; color: #f0f6fc; }
+.det-sub  { color: #8b949e; }
+.det-order {
+  width: 22px; height: 22px;
+  background: #1f6feb;
+  color: #fff;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700;
+}
+.collect-btn {
+  background: none;
+  border: 1px solid #30363d;
+  color: #8b949e;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 11px;
+  cursor: pointer;
+}
+.collect-btn:hover { border-color: #238636; color: #3fb950; }
+
+/* ── 지도 ── */
+#map { flex: 1; }
+
+/* ── 로봇 상태 패널 ── */
+.robot-panel {
+  position: absolute;
+  top: 70px;
+  right: 10px;
+  background: rgba(22,27,34,.92);
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 12px;
+  z-index: 1000;
+  min-width: 180px;
+}
+.robot-panel h3 { font-size: 12px; color: #8b949e; margin-bottom: 8px; }
+.robot-row { font-size: 12px; display: flex; gap: 8px; align-items: center; margin-bottom: 4px; }
+.robot-dot { width: 8px; height: 8px; border-radius: 50%; background: #3fb950; }
+.robot-dot.offline { background: #6e7681; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🤖 CleanAI FMS</h1>
+  <span class="badge">LIVE</span>
+  <div class="stat">미수거 <span id="stat-pending">0</span>건 &nbsp;|&nbsp; 오늘 수거 <span id="stat-collected">0</span>건 &nbsp;|&nbsp; <span id="stat-time">--:--:--</span></div>
+</header>
+
+<div class="main">
+  <!-- 사이드패널 -->
+  <div class="sidebar">
+    <div class="panel-title">경로 최적화</div>
+    <div class="route-controls">
+      <button class="btn btn-blue"  onclick="computeRoute('ortools')">▶ OR-Tools VRP 최적화</button>
+      <button class="btn btn-green" onclick="computeRoute('nn')">⚡ Nearest Neighbor (즉시)</button>
+      <button class="btn btn-red"   onclick="clearRoute()">✕ 경로 지우기</button>
+      <div class="route-info" id="route-info">경로 계산 전</div>
+    </div>
+    <div class="panel-title">미수거 탐지 목록</div>
+    <div class="det-list" id="det-list"></div>
+  </div>
+
+  <!-- 지도 -->
+  <div id="map"></div>
+</div>
+
+<!-- 로봇 상태 패널 -->
+<div class="robot-panel" id="robot-panel">
+  <h3>🤖 로봇 상태</h3>
+  <div id="robot-list"><div style="color:#6e7681;font-size:12px;">연결 대기 중...</div></div>
+</div>
+
+<!-- Leaflet -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<script>
+// ── 카테고리 색상 ──────────────────────────────────
+const CAT_COLOR = {
+  plastic_bottle: '#3b82f6',
+  can:            '#f59e0b',
+  paper:          '#10b981',
+  vinyl:          '#8b5cf6',
+  general_trash:  '#ef4444',
+  cigarette_butt: '#6b7280',
+};
+function catColor(c) { return CAT_COLOR[c] || '#60a5fa'; }
+
+const CAT_KO = {
+  plastic_bottle: '페트병',
+  can:            '캔',
+  paper:          '종이',
+  vinyl:          '비닐',
+  general_trash:  '일반쓰레기',
+  cigarette_butt: '담배꽁초',
+};
+function catKo(c) { return CAT_KO[c] || c; }
+
+// ── 지도 초기화 ────────────────────────────────────
+const DEPOT = [35.945149, 126.682853];
+
+const map = L.map('map', {
+  center: DEPOT,
+  zoom: 16,
+  zoomControl: true,
+});
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap contributors',
+  maxZoom: 19,
+}).addTo(map);
+
+// 출발지(S) 마커
+const depotMarker = L.marker(DEPOT, {
+  icon: L.divIcon({
+    className: '',
+    html: '<div style="background:#238636;color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.5)">S</div>',
+    iconSize: [28, 28],
+    iconAnchor: [14, 14],
+  })
+}).addTo(map).bindPopup('<b>출발지</b><br>군산대학교 디지털정보관');
+
+// ── 상태 변수 ──────────────────────────────────────
+let detectionMarkers = {};  // id → marker
+let detectionData    = {};  // id → row
+let routeLayers      = [];  // 현재 경로 레이어 목록
+let robotMarkers     = {};  // robot_id → marker
+
+// ── 탐지 마커 생성 ─────────────────────────────────
+function makeDetectionIcon(det, order) {
+  const color = catColor(det.category);
+  if (order) {
+    return L.divIcon({
+      className: '',
+      html: `<div style="background:${color};color:#fff;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.5)">${order}</div>`,
+      iconSize: [26, 26], iconAnchor: [13, 13],
+    });
+  }
+  return L.circleMarker([det.lat, det.lng], {
+    radius: 7, color: '#fff', weight: 2,
+    fillColor: color, fillOpacity: .9,
+  });
+}
+
+function addDetectionMarker(det) {
+  if (detectionMarkers[det.id]) return;
+  const marker = L.circleMarker([det.lat, det.lng], {
+    radius: 7, color: '#fff', weight: 2,
+    fillColor: catColor(det.category), fillOpacity: .9,
+  }).addTo(map)
+    .bindPopup(`<b>${catKo(det.category)}</b><br>신뢰도 ${(det.confidence*100).toFixed(1)}%<br>로봇 ${det.robot_id || '-'}<br>${det.detected_at || ''}`);
+  detectionMarkers[det.id] = marker;
+  detectionData[det.id]    = det;
+}
+
+function removeDetectionMarker(id) {
+  if (detectionMarkers[id]) {
+    map.removeLayer(detectionMarkers[id]);
+    delete detectionMarkers[id];
+    delete detectionData[id];
+  }
+}
+
+// ── 경로 그리기 (화살표 없이 polyline만 사용) ──────
+function drawRoute(routeData) {
+  clearRoute();
+
+  const waypoints = routeData.waypoints;
+  const roadPaths = routeData.road_paths || [];  // [[lat,lng],...]의 배열
+  const depot     = routeData.depot;
+
+  if (!waypoints.length) return;
+
+  // 마커 순서 번호 업데이트
+  waypoints.forEach(wp => {
+    if (detectionMarkers[wp.id]) {
+      map.removeLayer(detectionMarkers[wp.id]);
+    }
+    const icon = L.divIcon({
+      className: '',
+      html: `<div style="background:${catColor(wp.category)};color:#fff;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.5)">${wp.order}</div>`,
+      iconSize: [26, 26], iconAnchor: [13, 13],
+    });
+    const m = L.marker([wp.lat, wp.lng], { icon })
+      .addTo(map)
+      .bindPopup(`<b>${wp.order}번 수거</b><br>${catKo(wp.category)}<br>신뢰도 ${(wp.confidence*100).toFixed(1)}%`);
+    detectionMarkers[wp.id] = m;
+  });
+
+  // 도착지(E) 마커 — 마지막 waypoint 위치에 표시
+  const last = waypoints[waypoints.length - 1];
+  const eMarker = L.marker([last.lat, last.lng], {
+    icon: L.divIcon({
+      className: '',
+      html: '<div style="background:#ef4444;color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.5)">E</div>',
+      iconSize: [28, 28], iconAnchor: [14, 14],
+    })
+  }).addTo(map);
+  routeLayers.push(eMarker);
+
+  // 경로 polyline 그리기
+  if (roadPaths.length > 0) {
+    // 카카오 API 실제 도로 경로
+    roadPaths.forEach(seg => {
+      if (seg && seg.length >= 2) {
+        const line = L.polyline(seg, {
+          color: '#3b82f6',
+          weight: 4,
+          opacity: 0.85,
+        }).addTo(map);
+        routeLayers.push(line);
+      }
+    });
+  } else {
+    // 직선 경로 fallback (화살표 없이 polyline만)
+    const coords = [
+      [depot.lat, depot.lng],
+      ...waypoints.map(wp => [wp.lat, wp.lng]),
+      [depot.lat, depot.lng],
+    ];
+    const line = L.polyline(coords, {
+      color: '#3b82f6',
+      weight: 4,
+      opacity: 0.85,
+      dashArray: '8,4',
+    }).addTo(map);
+    routeLayers.push(line);
+  }
+
+  // 지도 범위 조정
+  const allCoords = [
+    [depot.lat, depot.lng],
+    ...waypoints.map(wp => [wp.lat, wp.lng]),
+  ];
+  map.fitBounds(L.latLngBounds(allCoords).pad(0.1));
+}
+
+function clearRoute() {
+  routeLayers.forEach(l => map.removeLayer(l));
+  routeLayers = [];
+  // 순서 번호 마커 → 일반 마커로 복원
+  Object.values(detectionData).forEach(det => {
+    if (detectionMarkers[det.id]) {
+      map.removeLayer(detectionMarkers[det.id]);
+    }
+    const m = L.circleMarker([det.lat, det.lng], {
+      radius: 7, color: '#fff', weight: 2,
+      fillColor: catColor(det.category), fillOpacity: .9,
+    }).addTo(map).bindPopup(`<b>${catKo(det.category)}</b><br>신뢰도 ${(det.confidence*100).toFixed(1)}%`);
+    detectionMarkers[det.id] = m;
+  });
+  document.getElementById('route-info').innerHTML = '경로 지워짐';
+}
+
+// ── 경로 계산 API 호출 ──────────────────────────────
+async function computeRoute(algo) {
+  const info = document.getElementById('route-info');
+  info.innerHTML = algo === 'ortools'
+    ? '⏳ OR-Tools 최적화 중 (최대 5초)...'
+    : '⚡ Nearest Neighbor 계산 중...';
+
+  try {
+    const resp = await fetch('/route', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ algorithm: algo, use_road: true }),
+    });
+    if (!resp.ok) throw new Error(await resp.text());
+    const data = await resp.json();
+
+    if (!data.waypoints.length) {
+      info.innerHTML = '미수거 탐지 없음';
+      return;
+    }
+
+    drawRoute(data);
+
+    const dist = (data.total_distance / 1000).toFixed(2);
+    info.innerHTML = `<b>${data.algorithm}</b><br>총 거리: <span class="dist">${dist}km</span> (${data.waypoints.length}개 지점, ${data.elapsed_ms.toFixed(0)}ms)`;
+  } catch (e) {
+    info.innerHTML = `<span class="err">오류: ${e.message}</span>`;
+  }
+}
+
+// ── 탐지 목록 렌더 ────────────────────────────────
+function renderDetList() {
+  const container = document.getElementById('det-list');
+  const items = Object.values(detectionData).filter(d => !d.collected);
+  document.getElementById('stat-pending').textContent = items.length;
+
+  if (!items.length) {
+    container.innerHTML = '<div style="padding:16px;color:#6e7681;font-size:12px;">미수거 탐지 없음</div>';
+    return;
+  }
+
+  container.innerHTML = items.map(det => `
+    <div class="det-item" onclick="map.flyTo([${det.lat},${det.lng}],18)">
+      <div class="det-dot" style="background:${catColor(det.category)}"></div>
+      <div class="det-body">
+        <div class="det-cat">${catKo(det.category)}</div>
+        <div class="det-sub">${(det.confidence*100).toFixed(0)}% · ${det.robot_id || '미지정'}</div>
+      </div>
+      <button class="collect-btn" onclick="event.stopPropagation();collectDet(${det.id})">수거</button>
+    </div>
+  `).join('');
+}
+
+async function collectDet(id) {
+  await fetch(`/detections/${id}/collect`, { method: 'PATCH' });
+  // WebSocket broadcast으로 자동 갱신됨
+}
+
+// ── 로봇 상태 렌더 ────────────────────────────────
+function updateRobotPanel(robots) {
+  const container = document.getElementById('robot-list');
+  if (!robots.length) {
+    container.innerHTML = '<div style="color:#6e7681;font-size:12px;">연결된 로봇 없음</div>';
+    return;
+  }
+  container.innerHTML = robots.map(r => `
+    <div class="robot-row">
+      <div class="robot-dot ${r.status === 'offline' ? 'offline' : ''}"></div>
+      <span>${r.robot_id}</span>
+      <span style="color:#8b949e">${r.status}</span>
+      ${r.battery ? `<span style="color:#f0f6fc">${r.battery.toFixed(0)}%</span>` : ''}
+    </div>
+  `).join('');
+}
+
+function updateRobotMarker(data) {
+  if (!robotMarkers[data.robot_id]) {
+    robotMarkers[data.robot_id] = L.marker([data.lat, data.lng], {
+      icon: L.divIcon({
+        className: '',
+        html: `<div style="background:#0d9488;color:#fff;padding:3px 7px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.5)">🤖 ${data.robot_id}</div>`,
+        iconAnchor: [20, 12],
+      })
+    }).addTo(map);
+  } else {
+    robotMarkers[data.robot_id].setLatLng([data.lat, data.lng]);
+  }
+}
+
+// ── WebSocket 연결 ─────────────────────────────────
+function connectWS() {
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  const ws = new WebSocket(`${proto}://${location.host}/ws`);
+
+  ws.onmessage = e => {
+    const data = JSON.parse(e.data);
+    if (data.event === 'new_detection') {
+      detectionData[data.id] = { ...data, collected: false };
+      addDetectionMarker({ ...data, collected: false });
+      renderDetList();
+    } else if (data.event === 'collected') {
+      if (detectionData[data.id]) detectionData[data.id].collected = true;
+      removeDetectionMarker(data.id);
+      renderDetList();
+    } else if (data.event === 'robot_update') {
+      updateRobotMarker(data);
+    }
+  };
+
+  ws.onclose = () => {
+    console.log('WS disconnected, reconnecting in 3s...');
+    setTimeout(connectWS, 3000);
+  };
+
+  // keep-alive
+  setInterval(() => { if (ws.readyState === 1) ws.send('ping'); }, 15000);
+}
+
+// ── 초기 데이터 로드 ───────────────────────────────
+async function loadInitialData() {
+  try {
+    // 탐지 목록
+    const dets = await (await fetch('/detections?collected=false&limit=200')).json();
+    dets.forEach(det => {
+      detectionData[det.id] = det;
+      addDetectionMarker(det);
+    });
+    renderDetList();
+    document.getElementById('stat-pending').textContent = dets.length;
+
+    // 수거 완료 건수 (오늘)
+    const all = await (await fetch('/detections?collected=true&limit=500')).json();
+    const today = new Date().toISOString().slice(0, 10);
+    const todayCount = all.filter(d => (d.collected_at || '').startsWith(today)).length;
+    document.getElementById('stat-collected').textContent = todayCount;
+
+    // 로봇 상태
+    const robots = await (await fetch('/robots')).json();
+    updateRobotPanel(robots);
+    robots.forEach(r => updateRobotMarker(r));
+  } catch (e) {
+    console.error('초기 로드 실패:', e);
+  }
+}
+
+// ── 시계 ──────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  document.getElementById('stat-time').textContent =
+    now.toLocaleTimeString('ko-KR', { hour12: false });
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── 시작 ──────────────────────────────────────────
+// ---- FMS / simulation overrides (later declarations win) ----
+const SIM_LABEL = '\uc2dc\ubbac\ub808\uc774\uc158';
+const ROBOT_COLORS = ['#0d9488', '#e11d48', '#7c3aed', '#ea580c', '#2563eb'];
+const colorMap = {};
+const robotState = {};
+function robotColor(id) {
+  if (!(id in colorMap)) colorMap[id] = ROBOT_COLORS[Object.keys(colorMap).length % ROBOT_COLORS.length];
+  return colorMap[id];
+}
+function isSim(id) { return String(id).startsWith('sim_'); }
+
+const simBanner = document.createElement('div');
+simBanner.style.cssText = 'position:fixed;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(245,158,11,.95);color:#111;padding:4px 14px;border-radius:12px;font-size:12px;font-weight:700;z-index:2000;display:none';
+simBanner.textContent = SIM_LABEL + ' (SIMULATION)';
+document.body.appendChild(simBanner);
+
+function renderRobotPanel() {
+  const list = Object.values(robotState);
+  const el = document.getElementById('robot-list');
+  simBanner.style.display = list.some(r => isSim(r.robot_id) && r.status !== 'offline') ? '' : 'none';
+  if (!list.length) return;
+  el.innerHTML = list.map(r => {
+    const off = r.status === 'offline';
+    const dot = off ? '' : `background:${robotColor(r.robot_id)}`;
+    const batt = (r.battery !== null && r.battery !== undefined) ? `<span style="color:#f0f6fc">${Number(r.battery).toFixed(0)}%</span>` : '';
+    const sim = isSim(r.robot_id) ? `<span style="color:#f59e0b;font-size:10px">${SIM_LABEL}</span>` : '';
+    return `<div class="robot-row"><div class="robot-dot ${off ? 'offline' : ''}" style="${dot}"></div><span>${r.robot_id}</span><span style="color:#8b949e">${r.status}</span>${batt}${sim}</div>`;
+  }).join('');
+}
+
+function updateRobotPanel(robots) {
+  robots.forEach(r => { robotState[r.robot_id] = r; });
+  renderRobotPanel();
+}
+
+function updateRobotMarker(data) {
+  const id = data.robot_id;
+  robotState[id] = Object.assign({}, robotState[id] || {}, data);
+  renderRobotPanel();
+  if (data.lat === null || data.lat === undefined) return;
+  if (robotState[id].status === 'offline') {
+    if (robotMarkers[id]) { map.removeLayer(robotMarkers[id]); delete robotMarkers[id]; }
+    return;
+  }
+  if (!robotMarkers[id]) {
+    const label = (isSim(id) ? '[' + SIM_LABEL + '] ' : '') + id;
+    const html = `<div style="background:${robotColor(id)};color:#fff;padding:3px 7px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.5)">${label}</div>`;
+    robotMarkers[id] = L.marker([data.lat, data.lng], {
+      icon: L.divIcon({ className: '', html: html, iconAnchor: [20, 12] })
+    }).addTo(map);
+  } else {
+    robotMarkers[id].setLatLng([data.lat, data.lng]);
+  }
+}
+
+const assignLayer = L.layerGroup().addTo(map);
+async function refreshAssignments() {
+  try {
+    const tasks = await (await fetch('/fms/tasks')).json();
+    assignLayer.clearLayers();
+    for (const [rid, items] of Object.entries(tasks)) {
+      const r = robotState[rid];
+      if (!r || r.lat === null || r.lat === undefined) continue;
+      const col = robotColor(rid);
+      items.forEach(t => {
+        L.polyline([[r.lat, r.lng], [t.lat, t.lng]], { color: col, weight: 2, opacity: .8, dashArray: '4,6' }).addTo(assignLayer);
+        const m = detectionMarkers[t.id];
+        if (m && m.setStyle) m.setStyle({ color: col, weight: 3 });
+      });
+    }
+  } catch (e) { /* ignore */ }
+}
+setInterval(refreshAssignments, 1500);
+
+// ---- patrol path recorder (dev tool) ----
+const recPts = [];
+let recOn = false;
+const recLine = L.polyline([], { color: '#facc15', weight: 4 }).addTo(map);
+const recDots = L.layerGroup().addTo(map);
+const recBox = document.createElement('div');
+recBox.style.cssText = 'position:fixed;left:316px;bottom:10px;z-index:2000;background:rgba(22,27,34,.95);border:1px solid #30363d;border-radius:8px;padding:8px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:12px;max-width:420px';
+recBox.innerHTML = '<button class="collect-btn" id="rec-toggle">Draw patrol path</button>'
+  + '<button class="collect-btn" id="rec-undo">Undo</button>'
+  + '<button class="collect-btn" id="rec-copy">Copy JSON</button>'
+  + '<button class="collect-btn" id="rec-clear">Clear</button>'
+  + '<span id="rec-n" style="color:#8b949e">0 pts</span>'
+  + '<textarea id="rec-out" readonly style="display:none;width:100%;height:48px;background:#0d1117;color:#e6edf3;border:1px solid #30363d"></textarea>';
+document.body.appendChild(recBox);
+
+function recRedraw() {
+  recLine.setLatLngs(recPts);
+  recDots.clearLayers();
+  recPts.forEach(p => L.circleMarker(p, { radius: 4, color: '#facc15', fillColor: '#facc15', fillOpacity: 1 }).addTo(recDots));
+  document.getElementById('rec-n').textContent = recPts.length + ' pts';
+}
+document.getElementById('rec-toggle').onclick = () => {
+  recOn = !recOn;
+  document.getElementById('rec-toggle').style.color = recOn ? '#facc15' : '';
+  map.getContainer().style.cursor = recOn ? 'crosshair' : '';
+};
+document.getElementById('rec-undo').onclick = () => { recPts.pop(); recRedraw(); };
+document.getElementById('rec-clear').onclick = () => { recPts.length = 0; recRedraw(); };
+document.getElementById('rec-copy').onclick = () => {
+  const s = JSON.stringify(recPts.map(p => [Number(p[0].toFixed(6)), Number(p[1].toFixed(6))]));
+  const out = document.getElementById('rec-out');
+  out.style.display = 'block';
+  out.value = s;
+  out.select();
+  try { navigator.clipboard.writeText(s); } catch (e) { /* manual copy */ }
+};
+map.on('click', e => {
+  if (!recOn) return;
+  recPts.push([e.latlng.lat, e.latlng.lng]);
+  recRedraw();
+});
+
+loadInitialData();
+connectWS();
+</script>
+</body>
+</html>

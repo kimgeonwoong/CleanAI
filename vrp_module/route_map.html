@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    
+            <meta name="viewport" content="width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <style>
+                #map_147d036abc9854a084771d2a1b4917bd {
+                    position: relative;
+                    width: 100.0%;
+                    height: 100.0%;
+                    left: 0.0%;
+                    top: 0.0%;
+                }
+                .leaflet-container { font-size: 1rem; }
+            </style>
+
+            <style>html, body {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            </style>
+
+            <style>#map {
+                position:absolute;
+                top:0;
+                bottom:0;
+                right:0;
+                left:0;
+                }
+            </style>
+
+            <script>
+                L_NO_TOUCH = false;
+                L_DISABLE_3D = false;
+            </script>
+
+        
+</head>
+<body>
+    
+    
+    <div style="position:fixed;bottom:30px;left:30px;z-index:1000;
+                background:white;padding:12px;border-radius:8px;
+                box-shadow:2px 2px 8px rgba(0,0,0,0.3);font-size:13px;">
+        <b>CleanAI 수거 경로</b><br>
+        <span style="color:#1565C0">━━</span> OR-Tools VRP (3413m)<br>
+        <span style="color:#C62828">╌╌</span> Nearest Neighbor (3574m)<br>
+        <hr style="margin:4px 0">
+        🟢 페트병 &nbsp; 🔵 캔 &nbsp; 🟠 종이<br>
+        🩷 비닐 &nbsp; ⚫ 일반 &nbsp; 🔴 담배꽁초<br>
+        🏁 출발/복귀 지점
+    </div>
+    
+            <div class="folium-map" id="map_147d036abc9854a084771d2a1b4917bd" ></div>
+        
+</body>
+<script>
+    
+    
+            var map_147d036abc9854a084771d2a1b4917bd = L.map(
+                "map_147d036abc9854a084771d2a1b4917bd",
+                {
+                    center: [35.97585555555557, 126.73736666666667],
+                    crs: L.CRS.EPSG3857,
+                    ...{
+  "zoom": 16,
+  "zoomControl": true,
+  "preferCanvas": false,
+}
+
+                }
+            );
+
+            
+
+        
+    
+            var tile_layer_3e89e7e38f5196e890364c5396a912ed = L.tileLayer(
+                "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {
+  "minZoom": 0,
+  "maxZoom": 18,
+  "maxNativeZoom": 18,
+  "noWrap": false,
+  "attribution": "OpenStreetMap",
+  "subdomains": "abc",
+  "detectRetina": false,
+  "tms": false,
+  "opacity": 1,
+}
+
+            );
+        
+    
+            tile_layer_3e89e7e38f5196e890364c5396a912ed.addTo(map_147d036abc9854a084771d2a1b4917bd);
+        
+    
+            var marker_177f571cbd07754f1663ac8f75af3d5b = L.marker(
+                [35.976, 126.737],
+                {
+}
+            ).addTo(map_147d036abc9854a084771d2a1b4917bd);
+        
+    
+            var icon_d86847889a1b3b07c030af4360a40a03 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "red",
+  "iconColor": "white",
+  "icon": "home",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_cd1bc37efd54ccb6669b5902d05de446 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_2aced8d8f0ddabfd6d7e109a98fc8042 = $(`<div id="html_2aced8d8f0ddabfd6d7e109a98fc8042" style="width: 100.0%; height: 100.0%;">🏁 출발지 / 복귀지점</div>`)[0];
+                popup_cd1bc37efd54ccb6669b5902d05de446.setContent(html_2aced8d8f0ddabfd6d7e109a98fc8042);
+            
+        
+
+        marker_177f571cbd07754f1663ac8f75af3d5b.bindPopup(popup_cd1bc37efd54ccb6669b5902d05de446)
+        ;
+
+        
+    
+    
+                marker_177f571cbd07754f1663ac8f75af3d5b.setIcon(icon_d86847889a1b3b07c030af4360a40a03);
+            
+    
+            var circle_marker_258f35e46000bf8b91f147472775d174 = L.circleMarker(
+                [35.9742, 126.7365],
+                {"bubblingMouseEvents": true, "color": "orange", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "orange", "fillOpacity": 0.8, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 3}
+            ).addTo(map_147d036abc9854a084771d2a1b4917bd);
+        
+    
+        var popup_8073db75540ea1219116d7027eb9c438 = L.popup({
+  "maxWidth": 200,
+});
+
+        
+            
+                var html_d5718d7cd289d4532f19bbaac19e9869 = $(`<div id="html_d5718d7cd289d4532f19bbaac19e9869" style="width: 100.0%; height: 100.0%;"><b>1번째 수거</b><br>종류: 종이<br>신뢰도: 75%<br>ID: #3</div>`)[0];
+                popup_8073db75540ea1219116d7027eb9c438.setContent(html_d5718d7cd289d4532f19bbaac19e9869);
+            
+        
+
+        circle_marker_258f35e46000bf8b91f147472775d174.bindPopup(popup_8073db75540ea1219116d7027eb9c438)
+        ;
+
+        
+    
+    
+            circle_marker_258f35e46000bf8b91f147472775d174.bindTooltip(
+                `<div>
+                     1. 종이
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_37614d3abfd37ff3ed8c239cdf47ba2b = L.marker(
+                [35.9742, 126.7365],
+                {
+}
+            ).addTo(map_147d036abc9854a084771d2a1b4917bd);
+        
+    
+            var div_icon_5e918c61f3d1f25dbbf18dfb56f34b04 = L.divIcon({
+  "html": "\u003cdiv style=\"font-size:11px;font-weight:bold;color:white;background:orange;border-radius:50%;width:20px;height:20px;text-align:center;line-height:20px;\"\u003e1\u003c/div\u003e",
+  "iconSize": [20, 20],
+  "iconAnchor": [10, 10],
+  "className": "empty",
+});
+        
+    
+                marker_37614d3abfd37ff3ed8c239cdf47ba2b.setIcon(div_icon_5e918c61f3d1f25dbbf18dfb56f34b04);
+            
+    
+            var circle_marker_198cb2f0c571befbbfd05e23013fa8e3 = L.circleMarker(
+                [35.9735, 126.7378],
+                {"bubblingMouseEvents": true, "color": "darkred", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "darkred", "fillOpacity": 0.8, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 3}
+            ).addTo(map_147d036abc9854a084771d2a1b4917bd);
+        
+    
+        var popup_d0d42bec647a826c4126f748fe66dbe6 = L.popup({
+  "maxWidth": 200,
+});
+
+        
+            
+                var html_f702b8b24516bfee92abe14c36e01b90 = $(`<div id="html_f702b8b24516bfee92abe14c36e01b90" style="width: 100.0%; height: 100.0%;"><b>2번째 수거</b><br>종류: 담배꽁초<br>신뢰도: 91%<br>ID: #5</div>`)[0];
+                popup_d0d42bec647a826c4126f748fe66dbe6.setContent(html_f702b8b24516bfee92abe14c36e01b90);
+            
+        
+
+        circle_marker_198cb2f0c571befbbfd05e23013fa8e3.bindPopup(popup_d0d42bec647a826c4126f748fe66dbe6)
+        ;
+
+        
+    
+    
+            circle_marker_198cb2f0c571befbbfd05e23013fa8e3.bindTooltip(
+                `<div>
+                     2. 담배꽁초
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_158c236b75141840bbf43eadd428abdc = L.marker(
+                [35.9735, 126.7378],
+                {
+}
+            ).addTo(map_147d036abc9854a084771d2a1b4917bd);
+        
+    
+            var div_icon_64056050e92433ad3938966d3a6d2d10 = L.divIcon({
+  "html": "\u003cdiv style=\"font-size:11px;font-weight:bold;color:white;background:darkred;border-radius:50%;width:20px;height:20px;text-align:center;line-height:20px;\"\u003e2\u003c/div\u003e",
+  "iconSize": [20, 20],
+  "iconAnchor": [10, 10],
+  "className": "empty",
+});
+        
+    
+                marker_158c236b75141840bbf43eadd428abdc.setIcon(div_icon_64056050e92433ad3938966d3a6d2d10);
+            
+    
+            var circle_marker_b5c40e5af97c0459745a44f88e2f3441 = L.circleMarker(
+                [35.9746, 126.7398],
+                {"bubblingMouseEvents": true, "color": "blue", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "blue", "fillOpacity": 0.8, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 3}
+            ).addTo(map_147d036abc9854a084771d2a1b4917bd);
+        
+    
+        var popup_edaea5da509fea9c91a4c8b8251602c1 = L.popup({
+  "maxWidth": 200,
+});
+
+        
+            
+                var html_e296b43a3d55d9da357f310d2db16771 = $(`<div id="html_e296b43a3d55d9da357f310d2db16771" style="width: 100.0%; height: 100.0%;"><b>3번째 수거</b><br>종류: 캔<br>신뢰도: 85%<br>ID: #8</div>`)[0];
+                popup_edaea5da509fea9c91a4c8b8251602c1.setContent(html_e296b43a3d55d9da357f310d2db16771);
+            
+        
+
+        circle_marker_b5c40e5af97c0459745a44f88e2f3441.bindPopup(popup_edaea5da509fea9c91a4c8b8251602c1)
+        ;
+
+        
+    
+    
+            circle_marker_b5c40e5af97c0459745a44f88e2f3441.bindTooltip(
+                `<div>
+                     3. 캔
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_449c1acab68cb4e2be9741947da1de3f = L.marker(
+                [35.9746, 126.7398],
+                {
+}
+            ).addTo(map_147d036abc9854a084771d2a1b4917bd);
+        
+    
+            var div_icon_716f2eb67eea5eeb9774ce34ec420ae6 = L.divIcon({
+  "html": "\u003cdiv style=\"font-size:11px;font-weight:bold;color:white;background:blue;border-radius:50%;width:20px;height:20px;text-align:center;line-height:20px;\"\u003e3\u003c/div\u003e",
+  "iconSize": [20, 20],
+  "iconAnchor": [10, 10],
+  "className": "empty",
+});
+        
+    
+                marker_449c1acab68cb4e2be9741947da1de3f.setIcon(div_icon_716f2eb67eea5eeb9774ce34ec420ae6);
+            
+    
+            var circle_marker_d7cebc9328e1b1f9d420643bd6bf002d = L.circleMarker(
+                [35.9782, 126.7392],
+                {"bubblingMouseEvents": true, "color": "gray", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "gray", "fillOpacity": 0.8, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 3}
+            ).addTo(map_147d036abc9854a084771d2a1b4917bd);
+        
+    
+        var popup_3b92af420200f26a00aa04c015122c17 = L.popup({
+  "maxWidth": 200,
+});
+
+        
+            
+                var html_e3c9e5f46800eca617d710330187d17b = $(`<div id="html_e3c9e5f46800eca617d710330187d17b" style="width: 100.0%; height: 100.0%;"><b>4번째 수거</b><br>종류: 일반쓰레기<br>신뢰도: 68%<br>ID: #6</div>`)[0];
+                popup_3b92af420200f26a00aa04c015122c17.setContent(html_e3c9e5f46800eca617d710330187d17b);
+            
+        
+
+        circle_marker_d7cebc9328e1b1f9d420643bd6bf002d.bindPopup(popup_3b92af420200f26a00aa04c015122c17)
+        ;
+
+        
+    
+    
+            circle_marker_d7cebc9328e1b1f9d420643bd6bf002d.bindTooltip(
+                `<div>
+                     4. 일반쓰레기
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_92e81e9c0bd85b964e257be2e219f5e0 = L.marker(
+                [35.9782, 126.7392],
+                {
+}
+            ).addTo(map_147d036abc9854a084771d2a1b4917bd);
+        
+    
+            var div_icon_604ce51fe2d9c5c8d2119bea8dde5b0d = L.divIcon({
+  "html": "\u003cdiv style=\"font-size:11px;font-weight:bold;color:white;background:gray;border-radius:50%;width:20px;height:20px;text-align:center;line-height:20px;\"\u003e4\u003c/div\u003e",
+  "iconSize": [20, 20],
+  "iconAnchor": [10, 10],
+  "className": "empty",
+});
+        
+    
+                marker_92e81e9c0bd85b964e257be2e219f5e0.setIcon(div_icon_604ce51fe2d9c5c8d2119bea8dde5b0d);
+            
+    
+            var circle_marker_95cff1b29e8d0bb6815e4bd2a02c5c13 = L.circleMarker(
+                [35.9754, 126.7385],
+                {"bubblingMouseEvents": true, "color": "blue", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "blue", "fillOpacity": 0.8, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 3}
+            ).addTo(map_147d036abc9854a084771d2a1b4917bd);
+        
+    
+        var popup_fbc1cdef4a031549958eccaa3748dd24 = L.popup({
+  "maxWidth": 200,
+});
+
+        
+            
+                var html_2ec1a6df701c31c51932866db6008e75 = $(`<div id="html_2ec1a6df701c31c51932866db6008e75" style="width: 100.0%; height: 100.0%;"><b>5번째 수거</b><br>종류: 캔<br>신뢰도: 87%<br>ID: #2</div>`)[0];
+                popup_fbc1cdef4a031549958eccaa3748dd24.setContent(html_2ec1a6df701c31c51932866db6008e75);
+            
+        
+
+        circle_marker_95cff1b29e8d0bb6815e4bd2a02c5c13.bindPopup(popup_fbc1cdef4a031549958eccaa3748dd24)
+        ;
+
+        
+    
+    
+            circle_marker_95cff1b29e8d0bb6815e4bd2a02c5c13.bindTooltip(
+                `<div>
+                     5. 캔
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_cac3ea8c8106e1291c7c8c9ee0316fcf = L.marker(
+                [35.9754, 126.7385],
+                {
+}
+            ).addTo(map_147d036abc9854a084771d2a1b4917bd);
+        
+    
+            var div_icon_7b54162050a3cb9bf0da012383a96866 = L.divIcon({
+  "html": "\u003cdiv style=\"font-size:11px;font-weight:bold;color:white;background:blue;border-radius:50%;width:20px;height:20px;text-align:center;line-height:20px;\"\u003e5\u003c/div\u003e",
+  "iconSize": [20, 20],
+  "iconAnchor": [10, 10],
+  "className": "empty",
+});
+        
+    
+                marker_cac3ea8c8106e1291c7c8c9ee0316fcf.setIcon(div_icon_7b54162050a3cb9bf0da012383a96866);
+            
+    
+            var circle_marker_497cb613bceb21e6d09e1a0d7a13b084 = L.circleMarker(
+                [35.9762, 126.7348],
+                {"bubblingMouseEvents": true, "color": "green", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "green", "fillOpacity": 0.8, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 3}
+            ).addTo(map_147d036abc9854a084771d2a1b4917bd);
+        
+    
+        var popup_698d085a26403ce5ee70efb9c3fc4c33 = L.popup({
+  "maxWidth": 200,
+});
+
+        
+            
+                var html_569c29ac0915bf179b3a4a03d1cde1ac = $(`<div id="html_569c29ac0915bf179b3a4a03d1cde1ac" style="width: 100.0%; height: 100.0%;"><b>6번째 수거</b><br>종류: 페트병<br>신뢰도: 79%<br>ID: #7</div>`)[0];
+                popup_698d085a26403ce5ee70efb9c3fc4c33.setContent(html_569c29ac0915bf179b3a4a03d1cde1ac);
+            
+        
+
+        circle_marker_497cb613bceb21e6d09e1a0d7a13b084.bindPopup(popup_698d085a26403ce5ee70efb9c3fc4c33)
+        ;
+
+        
+    
+    
+            circle_marker_497cb613bceb21e6d09e1a0d7a13b084.bindTooltip(
+                `<div>
+                     6. 페트병
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_4f520670c64f7a9e4b9ba1e9f6e63e39 = L.marker(
+                [35.9762, 126.7348],
+                {
+}
+            ).addTo(map_147d036abc9854a084771d2a1b4917bd);
+        
+    
+            var div_icon_4383cded7ca93bb5a83356f493cca14d = L.divIcon({
+  "html": "\u003cdiv style=\"font-size:11px;font-weight:bold;color:white;background:green;border-radius:50%;width:20px;height:20px;text-align:center;line-height:20px;\"\u003e6\u003c/div\u003e",
+  "iconSize": [20, 20],
+  "iconAnchor": [10, 10],
+  "className": "empty",
+});
+        
+    
+                marker_4f520670c64f7a9e4b9ba1e9f6e63e39.setIcon(div_icon_4383cded7ca93bb5a83356f493cca14d);
+            
+    
+            var circle_marker_3d5a12f8cc177b99ac96a10a09026d2d = L.circleMarker(
+                [35.9778, 126.7355],
+                {"bubblingMouseEvents": true, "color": "pink", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "pink", "fillOpacity": 0.8, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 3}
+            ).addTo(map_147d036abc9854a084771d2a1b4917bd);
+        
+    
+        var popup_622e6ccca9a53ae7afedb53574444135 = L.popup({
+  "maxWidth": 200,
+});
+
+        
+            
+                var html_a35484dceae7a1cd403a8b1918042bf6 = $(`<div id="html_a35484dceae7a1cd403a8b1918042bf6" style="width: 100.0%; height: 100.0%;"><b>7번째 수거</b><br>종류: 비닐<br>신뢰도: 83%<br>ID: #4</div>`)[0];
+                popup_622e6ccca9a53ae7afedb53574444135.setContent(html_a35484dceae7a1cd403a8b1918042bf6);
+            
+        
+
+        circle_marker_3d5a12f8cc177b99ac96a10a09026d2d.bindPopup(popup_622e6ccca9a53ae7afedb53574444135)
+        ;
+
+        
+    
+    
+            circle_marker_3d5a12f8cc177b99ac96a10a09026d2d.bindTooltip(
+                `<div>
+                     7. 비닐
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_8075c8f659d57c7e20f30a3e61db04c9 = L.marker(
+                [35.9778, 126.7355],
+                {
+}
+            ).addTo(map_147d036abc9854a084771d2a1b4917bd);
+        
+    
+            var div_icon_ef336fbc47d3f234ff88e0780d731870 = L.divIcon({
+  "html": "\u003cdiv style=\"font-size:11px;font-weight:bold;color:white;background:pink;border-radius:50%;width:20px;height:20px;text-align:center;line-height:20px;\"\u003e7\u003c/div\u003e",
+  "iconSize": [20, 20],
+  "iconAnchor": [10, 10],
+  "className": "empty",
+});
+        
+    
+                marker_8075c8f659d57c7e20f30a3e61db04c9.setIcon(div_icon_ef336fbc47d3f234ff88e0780d731870);
+            
+    
+            var circle_marker_acddd0ec1ec23fa8010788a024ffa612 = L.circleMarker(
+                [35.9768, 126.7372],
+                {"bubblingMouseEvents": true, "color": "green", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "green", "fillOpacity": 0.8, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10, "stroke": true, "weight": 3}
+            ).addTo(map_147d036abc9854a084771d2a1b4917bd);
+        
+    
+        var popup_61c90506144c6042c0f7cd4a5b192fb9 = L.popup({
+  "maxWidth": 200,
+});
+
+        
+            
+                var html_11cf288a9c07f27e00de871c457cd5b6 = $(`<div id="html_11cf288a9c07f27e00de871c457cd5b6" style="width: 100.0%; height: 100.0%;"><b>8번째 수거</b><br>종류: 페트병<br>신뢰도: 92%<br>ID: #1</div>`)[0];
+                popup_61c90506144c6042c0f7cd4a5b192fb9.setContent(html_11cf288a9c07f27e00de871c457cd5b6);
+            
+        
+
+        circle_marker_acddd0ec1ec23fa8010788a024ffa612.bindPopup(popup_61c90506144c6042c0f7cd4a5b192fb9)
+        ;
+
+        
+    
+    
+            circle_marker_acddd0ec1ec23fa8010788a024ffa612.bindTooltip(
+                `<div>
+                     8. 페트병
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_704fa1050fb7da95f7b0f8dfcfa2bf9e = L.marker(
+                [35.9768, 126.7372],
+                {
+}
+            ).addTo(map_147d036abc9854a084771d2a1b4917bd);
+        
+    
+            var div_icon_69cb80d9f8ecbeff51c2a80642f66f9a = L.divIcon({
+  "html": "\u003cdiv style=\"font-size:11px;font-weight:bold;color:white;background:green;border-radius:50%;width:20px;height:20px;text-align:center;line-height:20px;\"\u003e8\u003c/div\u003e",
+  "iconSize": [20, 20],
+  "iconAnchor": [10, 10],
+  "className": "empty",
+});
+        
+    
+                marker_704fa1050fb7da95f7b0f8dfcfa2bf9e.setIcon(div_icon_69cb80d9f8ecbeff51c2a80642f66f9a);
+            
+    
+            var poly_line_2b5f67fb66c4fd283c7b1d426e4a6acb = L.polyline(
+                [[35.976, 126.737], [35.9742, 126.7365], [35.9735, 126.7378], [35.9746, 126.7398], [35.9782, 126.7392], [35.9754, 126.7385], [35.9762, 126.7348], [35.9778, 126.7355], [35.9768, 126.7372], [35.976, 126.737]],
+                {"bubblingMouseEvents": true, "color": "#1565C0", "dashArray": null, "dashOffset": null, "fill": false, "fillColor": "#1565C0", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.85, "smoothFactor": 1.0, "stroke": true, "weight": 4}
+            ).addTo(map_147d036abc9854a084771d2a1b4917bd);
+        
+    
+            poly_line_2b5f67fb66c4fd283c7b1d426e4a6acb.bindTooltip(
+                `<div>
+                     OR-Tools VRP: 3413m
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var poly_line_8e4104685592d9a49067ac712ae0baae = L.polyline(
+                [[35.976, 126.737], [35.9768, 126.7372], [35.9778, 126.7355], [35.9762, 126.7348], [35.9742, 126.7365], [35.9735, 126.7378], [35.9746, 126.7398], [35.9754, 126.7385], [35.9782, 126.7392], [35.976, 126.737]],
+                {"bubblingMouseEvents": true, "color": "#C62828", "dashArray": "8 4", "dashOffset": null, "fill": false, "fillColor": "#C62828", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.5, "smoothFactor": 1.0, "stroke": true, "weight": 3}
+            ).addTo(map_147d036abc9854a084771d2a1b4917bd);
+        
+    
+            poly_line_8e4104685592d9a49067ac712ae0baae.bindTooltip(
+                `<div>
+                     Nearest Neighbor: 3574m
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+</script>
+</html>
