@@ -21,7 +21,7 @@ from pydantic import BaseModel
 from vrp_solver import WayPoint, solve_ortools, solve_nearest_neighbor
 
 # ── 설정 ─────────────────────────────────────────────
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://cleanai:cleanai123@db:5432/cleanai")
+DATABASE_URL = os.environ["DATABASE_URL"]
 REDIS_URL = os.getenv("REDIS_URL", "redis://redis:6379")
 
 # ── WebSocket 연결 관리 ───────────────────────────────
